@@ -71,16 +71,17 @@ That last requirement is generally the only one that may require a specific fire
     1. In the **Boot disk** seciton, click the **Change** button. 
     1. Choose the **Ubuntu 14.04 LTS** image, then click **Select**.
     1. In the **Firewall** section, select the boxes for **Allow HTTP traffic** and **Allow HTTPS* traffic.
-  [Screenshot of settings for mhn-admin VM](GCP-mhn-admin-Create.png)
+  ![Screenshot of settings for mhn-admin VM](GCP-mhn-admin-Create.png)
     1. Click **Create**.
   
 2. Configure your firewall rules. You can do this in the Web UI, but it's faster to do through the console.
-  1. Click the **Access Cloud Shell** button in the header bar of GCP. 
+    1. Click the **Access Cloud Shell** button in the header bar of GCP. 
   ![Screenshot of Google Gloud Shell](/GCP-CloudShell.png)
   Google Cloud Shell provides you with command-line access to your cloud resources directly from your browser. You can easily manage your projects and resources without having to install the Google Cloud SDK or other tools on your system.
-    1. Click **Continue**.
+        1. Click **Continue**.
 Alternatively, you can [download and install the GCP SDK](https://cloud.google.com/sdk/docs/quickstarts) so you can SSH directly to youur environment.
-  2. . Run the following commands in the SDK to create the appropriate firewall rules. 
+    2. Run the following commands in the SDK to create the appropriate firewall rules.
+    
     * Each comand spans several lines. 
     * Note the target-tags point at the mh-admin VM you created above.
     * Each command will take a minute to run.
@@ -91,7 +92,9 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
     --description="Allow HoneyMap Feature from Anywhere" \
     --direction ingress \
     --target-tags="mhn-admin"
+```
 
+```
     gcloud compute firewall-rules create hpfeeds \
     --allow tcp:10000 \
     --description="Allow HPFeeds from Anywhere" \
@@ -120,8 +123,9 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
     disabled
     )"
     
-     ![Screenshot of commands to create Firewall rules in Google Cloud Shell](/GCP-FirewallRules.png)
+     
  ```
+ ![Screenshot of commands to create Firewall rules in Google Cloud Shell](https://github.com/sarcox/CP-HoneyPot-Instructions/blob/master/GCP-FirewallRules.png)
  
 ## Milestone 2: Install the MHN Admin Application
 **Summary:** You have created a VM to administrate your honeypot network, but it's just a shell. In this step you will install the server software. 
@@ -129,7 +133,7 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
 **Note:** This step may take 30-40 minutes overall. These instructions were adapted from the [MHN README](https://github.com/pwnlandia/mhn)
 
 1. Access them VM through the command line. Click the SSH button next to your mhn-admin VM to open an SSH terminal in your browser.
-[Screenshot of accessing SSH terminal from Computer instances page](/GCP-mhn-admin-SSH.png)
+[Screenshot of accessing SSH terminal from Computer instances page](https://github.com/sarcox/CP-HoneyPot-Instructions/blob/master//GCP-mhn-admin-SSH.png)
 2. Update the VM with latest packages and install some dependencies:
 
  ```
