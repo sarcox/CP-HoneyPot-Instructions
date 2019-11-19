@@ -77,14 +77,17 @@ That last requirement is generally the only one that may require a specific fire
 2. Configure your firewall rules. You can do this in the Web UI, but it's faster to do through the console.
     1. Click the **Access Cloud Shell** button in the header bar of GCP. 
   ![Screenshot of Google Gloud Shell](/GCP-CloudShell.png)
-  Google Cloud Shell provides you with command-line access to your cloud resources directly from your browser. You can easily manage your projects and resources without having to install the Google Cloud SDK or other tools on your system.
+  
+        1. Review the description: "Google Cloud Shell provides you with command-line access to your cloud resources directly from your browser. You can easily manage your projects and resources without having to install the Google Cloud SDK or other tools on your system."
         1. Click **Continue**.
+        
 Alternatively, you can [download and install the GCP SDK](https://cloud.google.com/sdk/docs/quickstarts) so you can SSH directly to youur environment.
+
     2. Run the following commands in the SDK to create the appropriate firewall rules.
     
-    * Each comand spans several lines. 
-    * Note the target-tags point at the mh-admin VM you created above.
-    * Each command will take a minute to run.
+        * Each comand spans several lines. 
+        * Note the target-tags point at the mh-admin VM you created above.
+        * Each command will take a minute to run.
 
 ```
     gcloud compute firewall-rules create honeymap \
@@ -103,13 +106,13 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
  ```
  
    3. (Optional) Review the firewall rules you created.
-     + In the Web UI:  
-        1. Click on the vm you created, mhn-admin to see details of the VM.
-        1. In the **Network Interfaces** section, click View details.
-        1. In the left VPC network menu, click **Firewall rules.**
-        1. You will see the *hpfeeds* and *honeymap* rules you created.
-        Navigate back to the VM instances page so you are in the correct place for the next step.
-     + In the Cloud shell, run the command:
+        * In the Web UI:  
+            1. Click on the vm you created, mhn-admin to see details of the VM.
+            1. In the **Network Interfaces** section, click View details.
+            1. In the left VPC network menu, click **Firewall rules.**
+            1. You will see the *hpfeeds* and *honeymap* rules you created.
+            Navigate back to the VM instances page so you are in the correct place for the next step.
+        * In the Cloud shell, run the command:
      
 ```
     gcloud compute firewall-rules list --format="table(
@@ -153,9 +156,10 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
 This will start the script running and it will take a while (approximately 20 minutes) to complete the first part.
 
   1. At the first set of prompts, complete the information as follows:
-    * *Do you wish to run in Debug mode? y/n :* **n**
-    * *Superuser email:* You can use any email -- this will be your username to login to the admin console.
-    * *Superuser password*: Choose any password -- you'll be asked to confirm.
+  
+    *Do you wish to run in Debug mode? y/n :* **n**
+    *Superuser email*: You can use any email -- this will be your username to login to the admin console.
+    *Superuser password*: Choose any password -- you'll be asked to confirm.
     
         Make a note of this username and password or you will not be able to access the server you set up in your browser!
   
