@@ -1,7 +1,7 @@
 # Weeks 10 & 11 Project: Honeypot
 
 **Summary**: Setup a honeypot and intercept some attempted attacks in the wild.
-<img src="https://i.imgur.com/QEzVHda.png">
+![MHN Honeypot Admin UI](https://i.imgur.com/QEzVHda.png)
 
 ## Background
 A honeypot is a decoy application, server, or other networked resource that intentionally exposes insecure features which, when exploited by an attacker, will reveal information about the methods, tools, and possibly even the identity of that attacker. Honeypots are commonly used by security researchers to understand the threat landscape facing developers and system administrators, collecting data that might include:
@@ -20,7 +20,7 @@ For example, a low-interaction honeypot might emulate a server capable of accept
 ## Overview
 In this assignment, you will stand up a basic honeypot and demonstrate its effectiveness at detecting and/or collecting data about an attack. Guided instructions for doing this using specific software are provided below, but you are free to take any approach you wish that demonstrates the following basic principles:
 
-Suc+ cessful configuration and deployment of a network-accessible honeypot server with two primary features:
+Successful configuration and deployment of a network-accessible honeypot server with two primary features:
 ++ An attack surface that is vulnerable or exposed in some way to network-based attacks
 + A network security feature such as an IDS configured to detect and log such attacks
 Illustration of at least one attack against the honeypot that can be detected or logged in a way that captures information about the attack or the attacker
@@ -29,12 +29,12 @@ Illustration of at least one attack against the honeypot that can be detected or
 # Walkthrough
 
 <hr>
-Keeping in mind that there are many ways one could fulfill the above requirements, in this section, we will walkthrough a basic honeypot deployment using a well-supported open source honeypot: <a href="https://github.com/pwnlandia/mhn">Modern Honey Network (MHN)</a>. MHN's architecture is modular and extensible and comes with many options for deploying different types of honey pots. In MHN architecture, there is a single admin VM which is used to deploy, manage and collect information from the honeypots, which are deployed as separate VMs. Thus to run MHN, we'll need to setup at least two VMs: the single **Admin VM** and at least one **Honeypot VM**.
+Keeping in mind that there are many ways one could fulfill the above requirements, in this section, we will walkthrough a basic honeypot deployment using a well-supported open source honeypot: [Modern Honey Network (MHN)](https://github.com/pwnlandia/mhn). MHN's architecture is modular and extensible and comes with many options for deploying different types of honey pots. In MHN architecture, there is a single admin VM which is used to deploy, manage and collect information from the honeypots, which are deployed as separate VMs. Thus to run MHN, we'll need to setup at least two VMs: the single **Admin VM** and at least one **Honeypot VM**.
 
-** Milestone 0: To the Google Cloud!
+## Milestone 0: To the Google Cloud!
 To complete this assignment, you'll need access to a cloud hosting provider to provision the VMs. Many providers offer time-limited free trial accounts with resource limitations, and you should easily be able to complete the requirements for this assignment within these limitations -- though you may need to ensure you cleanup before your trial period expires. The setup we'll walkthrough below has been tested to work with standard sized VMs. Running MHN Admin on micro size VM's is not recommended.
 
-You can use any cloud provider to which you already have access or that offers a free trial, though you'll need to be familiar with its usage and / or limitations. If you're not sure where to start, we recommend <a href="https://cloud.google.com/free/">Google Cloud Platform's Free Tier</a>, and while we'll provide general guidelines that should work with most cloud providers, the instructions below will also show insets labeled **GCP Users** with commands and settings specific to Google Cloud Platform. If you are confident about working with an alternate cloud provider such as AWS feel free to adapt the below instructions accordingly. If this is your first foray into the world of cloud computing, consider starting a GCP trial so you can follow the more specific instructions below.
+You can use any cloud provider to which you already have access or that offers a free trial, though you'll need to be familiar with its usage and / or limitations. If you're not sure where to start, we recommend [Google Cloud Platform's Free Tier](https://cloud.google.com/free/), and while we'll provide general guidelines that should work with most cloud providers, the instructions below will also show insets labeled **GCP Users** with commands and settings specific to Google Cloud Platform. If you are confident about working with an alternate cloud provider such as AWS feel free to adapt the below instructions accordingly. If this is your first foray into the world of cloud computing, consider starting a GCP trial so you can follow the more specific instructions below.
 
 ## Setting up your GCP environment
 You will complete some of the initial setup steps in the Web UI for GCP. This should give you a feel for the tools and functionality GCP provides.
@@ -74,9 +74,14 @@ That last requirement is generally the only one that may require a specific fire
     
 2. Configure your firewall rules. You can do this in the Web UI, but it's very fast to do through the console.
   1. Click the **Access Cloud Shell** button in the header bar of GCP. 
-  <img src="https://github.com/sarcox/CP-HoneyPot-Instructions/blob/master/GCP-CloudShell.png">
-Alternatively, you can <a href="https://cloud.google.com/sdk/docs/quickstarts">download and install the GCP SDK</a> so you can SSH directly to youur environment.
-  1. Run the following commands in the SDK to create the appropriate firewall rules. Note the target-tags point at the mh-admin VM you created above.
+  ![Screenshot of Google Gloud Shell](/GCP-CloudShell.png)
+  Google Cloud Shell provides you with command-line access to your cloud resources directly from your browser. You can easily manage your projects and resources without having to install the Google Cloud SDK or other tools on your system.
+    1. Click **Continue**.
+Alternatively, you can [download and install the GCP SDK](https://cloud.google.com/sdk/docs/quickstarts) so you can SSH directly to youur environment.
+  1. Run the following commands in the SDK to create the appropriate firewall rules. 
+    * Each comand spans several lines. 
+    * Note the target-tags point at the mh-admin VM you created above.
+    * Each command will take a minute to run.
 
 ```
     gcloud compute firewall-rules create honeymap \
@@ -91,5 +96,128 @@ Alternatively, you can <a href="https://cloud.google.com/sdk/docs/quickstarts">d
     --direction ingress \
     --target-tags="mhn-admin"
  ```
+ 
    1. (Optional) Review the firewall rules you created.
-     + In the browser, you 
+     + In the Web UI:  
+        1. Click on the vm you created, mhn-admin to see details of the VM.
+        1. In the **Network Interfaces** section, click View details.
+        1. In the left VPC network menu, click **Firewall rules.**
+        1. You will see the *hpfeeds* and *honeymap* rules you created.
+        Navigate back to the VM instances page so you are in the correct place for the next step.
+     + In the Cloud shell, run the command:
+     
+         <place command here>
+    
+ ![Screenshot of commands to create Firewall rules in Google Cloud Shell](/GCP-FirewallRules.png)
+ 
+## Milestone 2: Install the MHN Admin Application
+**Summary:** You have created a VM to administrate your honeypot network, but it's just a shell. In this step you will install the server software. 
+
+**Note:** This step may take 30-40 minutes overall. These instructions were adapted from the [MHN README](https://github.com/pwnlandia/mhn)
+
+1. Access them VM through the command line. Click the SSH button next to your mhn-admin VM to open an SSH terminal in your browser.
+[Screenshot of accessing SSH terminal from Computer instances page](/GCP-mhn-admin-SSH.png)
+2. Update the VM with latest packages and install some dependencies:
+
+ ```
+    sudo apt update
+    sudo apt install git python-magic -y
+ ```
+ 
+3. Download MHN and install:
+
+```
+    cd /opt/
+    sudo git clone https://github.com/pwnlandia/mhn.git
+    cd mhn/
+    sudo ./install.sh
+```
+
+This will start the script running and it will take a while (approximately 20 minutes) to complete the first part.
+
+  1. At the first set of prompts, complete the information as follows:
+    * *Do you wish to run in Debug mode? y/n :* **n**
+    * *Superuser email:* You can use any email -- this will be your username to login to the admin console.
+    * *Superuser password*: Choose any password -- you'll be asked to confirm.
+    
+        Make a note of this username and password or you will not be able to access the server you set up in your browser!
+  
+  2. You can accept the default values for the rest of the values by hitting enter. Answer n for any y/n prompts:
+  
+    Server base url ["http://#.#.#.#"]:
+    Honeymap url ["http://#.#.#.#:3000"]: 
+    Mail server address ["localhost"]:
+    Mail server port [25]: 
+    Use TLS for email?: y/n n
+    Use SSL for email?: y/n n
+    Mail server username [""]:
+    Mail server password [""]:
+    Mail default sender [""]:
+    Path for log file ["/var/log/mhn/mhn.log"]:
+
+  3. The script will churn for another 15 minutes or so, and near the end, there will be two more y/n prompts, both of which you can answer n:
+
+    Would you like to integrate with Splunk? (y/n) n
+    Would you like to install ELK? (y/n) n
+
+  4. Last question ...
+
+    Would you like to add MHN rules to UFW? (y/n) n
+
+Now you should be able to load the external IP in a browser and login to the admin console via the "superuser" values you chose above. Have a look around the UI to get oriented; there won't be any data available as we've not deployed any honeypots yet.
+
+## Milestone 3: Create a MHN Honeypot VM
+The admin system you installed simply supports managing honeypots. Now, you need to create one or more honeypots to capture data on attackers. MHN supports multiple honeypots, each of which has a slightly different purpose you can read about. 
+
+For each honeypot you will create a VM and a specific firewall rule for that VM. Previously you used the GUI to create a VM and the command line to create the VM rules. In this step, you will use the command line for both, which is quicker.
+
+1. Create the firewall rule to allow incoming TCP and UDP traffic on all ports for honeypot sensors:
+
+```
+    gcloud compute firewall-rules create wideopen \
+    --description="Allow TCP and UDP from Anywhere" \
+    --direction ingress \
+    --priority=1000 \
+    --network=default \
+    --action=allow \
+    --rules=tcp,udp \
+    --source-ranges=0.0.0.0/0 \
+    --target-tags="honeypot-1"
+```
+
+2. Create the VM for our honeypot, called honeypot-1:
+
+```
+    gcloud compute instances create "honeypot-1" \
+    --machine-type "n1-standard-1" \
+    --subnet "default" \
+    --maintenance-policy "MIGRATE" \
+    --tags "honeypot" \
+    --image "ubuntu-minimal-1804-bionic-v20191024" \
+    --image-project "ubuntu-os-cloud" \
+    --boot-disk-size "10" \
+    --boot-disk-type "pd-standard" \
+    --boot-disk-device-name "honeypot-1"
+```
+
+This VM will require different ports open, though which ones depend on the specific honeypot being used. To keep things simple, for this VM (and any additional honeypot VMs you create), simply allow incoming traffic from all ports and protocols. Again, this will likely require a firewall rule.
+
+## Milestone 4: Install the Honeypot Application
+You have the shell of your honeypot, but now you need to configure to attract attackers. MHN makes this straightforward. 
+1. Access the install script for your honeypot through the MHN server you have deployed.
+    1. Log on to the Web console for your MHN server. Copy the External IP of your system and paste into a browser tab. If the page fails to load make sure you are using the HTTP protocol and not HTTPS.
+    ![Screenshot of accessing MHN Admin VM through browser](GCP-mhn-admin-HTTP.png)
+    2. Log on with the email and password you configured before.
+    3. Click **Deploy** in the top nav, and choose a script. For your first VM choose **Ubuntu/Raspberry Pi - Dionaea**.
+    4. Copy the  Deploy Command appear shown.  This is a 1-line command to execute inside the honeypot VM to configure it properly.
+    
+    For reference, the page also shows the full deployment script. Do not copy this piece. 
+2. Access the honeypot-1 VM to configure it. 
+    1. From the Compute Engine page, click the **SSH** button next to your *honeypot-1* VM to open an SSH terminal in your browser.
+    2. Past the command you copied in the previous step and execute it.
+    This step should only take a few minutes to complete. 
+3. Return to the Web UI of mhn-admin server and confirm the installation. Click **Sensors > View Sesnors** sensors and you should see the new honeypot listed.
+
+## Milestone 5: Attack!
+Now for the fun part: let's attack the honeypot to make sure it's all working. You can use nmap in Kali Linux and pass it the IP of the honeypot VM (not the IP of the MHN Admin VM):
+
