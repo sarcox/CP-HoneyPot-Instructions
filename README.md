@@ -27,9 +27,7 @@ Illustration of at least one attack against the honeypot that can be detected or
 <hr>
 
 # Walkthrough
-
-<hr>
-Keeping in mind that there are many ways one could fulfill the above requirements, in this section, we will walkthrough a basic honeypot deployment using a well-supported open source honeypot: [Modern Honey Network (MHN)](https://github.com/pwnlandia/mhn). MHN's architecture is modular and extensible and comes with many options for deploying different types of honey pots. In MHN architecture, there is a single admin VM which is used to deploy, manage and collect information from the honeypots, which are deployed as separate VMs. Thus to run MHN, we'll need to setup at least two VMs: the single **Admin VM** and at least one **Honeypot VM**.
+Keeping in mind that there are many ways one could fulfill the above requirements, in this section, we will walkthrough a basic honeypot deployment using a well-supported open source honeypot: [Modern Honey Network](https://github.com/pwnlandia/mhn) (MHN). MHN's architecture is modular and extensible and comes with many options for deploying different types of honey pots. In MHN architecture, there is a single admin VM which is used to deploy, manage and collect information from the honeypots, which are deployed as separate VMs. Thus to run MHN, we'll need to setup at least two VMs: the single **Admin VM** and at least one **Honeypot VM**.
 
 ## Milestone 0: To the Google Cloud!
 To complete this assignment, you'll need access to a cloud hosting provider to provision the VMs. Many providers offer time-limited free trial accounts with resource limitations, and you should easily be able to complete the requirements for this assignment within these limitations -- though you may need to ensure you cleanup before your trial period expires. The setup we'll walkthrough below has been tested to work with standard sized VMs. Running MHN Admin on micro size VM's is not recommended.
@@ -40,9 +38,11 @@ You can use any cloud provider to which you already have access or that offers a
 You will complete some of the initial setup steps in the Web UI for GCP. This should give you a feel for the tools and functionality GCP provides.
 
 1. Navigate to https://console.cloud.google.com/. Log on if necessary.
+
     If you have multiple Google Accounts, make sure you are signed in with the account you would like ot use for this project.
+    
 2. Click the **TRY FOR FREE** button.
-  Fill out the information including providing a credit card number. The VMs you create for this project will not use up even 25% of your free credits if you create them as described here and only run them for a week or 2. Google will not autocharge you if you go over your limit.
+    Fill out the information including providing a credit card number. The VMs you create for this project will not use up even 25% of your free credits if you create them as described here and only run them for a week or 2. Google will not autocharge you if you go over your limit.
   
   Once you are enrolled you will land on the Welcome page.
   
@@ -63,22 +63,24 @@ You will complete some of the initial setup steps in the Web UI for GCP. This sh
 
 That last requirement is generally the only one that may require a specific firewall rule to configure properly, because those ports are non-standard and specific to MHN. Some cloud providers may require you to create the firewall rules separately and then apply them to the VM. Either way, make sure when you create the VM that you can access it via SSH.
 
-1. Click the **Create** button to create a new VM. You will create a VM to administrate the honeypot project.
-  1. Name the VM *mhn-admin*. This specific name is important because you will copy and paste commands later in the setup that refer to this VM name.
-  1. Set the **Region** to us-west 1. The Zone will automatically update to a related zone, such as us-west1-b.
-  1. Change the **Machine type** to f1-micro. Creating the correctly sized system means you do not waste your compute credits on systems that are more powerufl than you need.
-  1. In the **Boot disk** seciton, click the **Change** button. 
-  1. Choose the **Ubuntu 14.04 LTS** image, then click **Select**.
-  1. In the **Firewall** section, select the boxes for **Allow HTTP traffic** and **Allow HTTPS* traffic.
-  1. Click **Create**.
-    
-2. Configure your firewall rules. You can do this in the Web UI, but it's very fast to do through the console.
+1. Create the VM in the Web UI. 
+    1. Click the **Create** button to create a new VM. You will create a VM to administrate the honeypot project.
+    1. Name the VM *mhn-admin*. This specific name is important because you will copy and paste commands later in the setup that refer to this VM name.
+    1. Set the **Region** to us-west 1. The Zone will automatically update to a related zone, such as us-west1-b.
+    1. Change the **Machine type** to f1-micro. Creating the correctly sized system means you do not waste your compute credits on systems that are more powerufl than you need.
+    1. In the **Boot disk** seciton, click the **Change** button. 
+    1. Choose the **Ubuntu 14.04 LTS** image, then click **Select**.
+    1. In the **Firewall** section, select the boxes for **Allow HTTP traffic** and **Allow HTTPS* traffic.
+  [Screenshot of settings for mhn-admin VM](GCP-mhn-admin-Create.png)
+    1. Click **Create**.
+  
+2. Configure your firewall rules. You can do this in the Web UI, but it's faster to do through the console.
   1. Click the **Access Cloud Shell** button in the header bar of GCP. 
   ![Screenshot of Google Gloud Shell](/GCP-CloudShell.png)
   Google Cloud Shell provides you with command-line access to your cloud resources directly from your browser. You can easily manage your projects and resources without having to install the Google Cloud SDK or other tools on your system.
     1. Click **Continue**.
 Alternatively, you can [download and install the GCP SDK](https://cloud.google.com/sdk/docs/quickstarts) so you can SSH directly to youur environment.
-  1. Run the following commands in the SDK to create the appropriate firewall rules. 
+  2. . Run the following commands in the SDK to create the appropriate firewall rules. 
     * Each comand spans several lines. 
     * Note the target-tags point at the mh-admin VM you created above.
     * Each command will take a minute to run.
@@ -97,7 +99,7 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
     --target-tags="mhn-admin"
  ```
  
-   1. (Optional) Review the firewall rules you created.
+   3. (Optional) Review the firewall rules you created.
      + In the Web UI:  
         1. Click on the vm you created, mhn-admin to see details of the VM.
         1. In the **Network Interfaces** section, click View details.
@@ -106,9 +108,20 @@ Alternatively, you can [download and install the GCP SDK](https://cloud.google.c
         Navigate back to the VM instances page so you are in the correct place for the next step.
      + In the Cloud shell, run the command:
      
-         <place command here>
+```
+    gcloud compute firewall-rules list --format="table(
+    name,
+    network,
+    direction,
+    priority,
+    sourceRanges.list():label=SRC_RANGES,
+    allowed[].map().firewall_rule().list():label=ALLOW,
+    targetTags.list():label=TARGET_TAGS,
+    disabled
+    )"
     
- ![Screenshot of commands to create Firewall rules in Google Cloud Shell](/GCP-FirewallRules.png)
+     ![Screenshot of commands to create Firewall rules in Google Cloud Shell](/GCP-FirewallRules.png)
+ ```
  
 ## Milestone 2: Install the MHN Admin Application
 **Summary:** You have created a VM to administrate your honeypot network, but it's just a shell. In this step you will install the server software. 
