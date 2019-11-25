@@ -71,6 +71,8 @@ That last requirement is generally the only one that may require a specific fire
     1. In the **Boot disk** seciton, click the **Change** button. 
     1. Choose the **Ubuntu 14.04 LTS** image, then click **Select**.
     1. In the **Firewall** section, select the boxes for **Allow HTTP traffic** and **Allow HTTPS* traffic.
+    1. Expand the **Management, security, disks, networking, sole tenancy** section.
+        1. On the **Networking** tab, add a Network tag for *mhn-admin*.
   ![Screenshot of settings for mhn-admin VM](GCP-mhn-admin-Create.png)
     1. Click **Create**.
   
@@ -203,7 +205,7 @@ For each honeypot you will create a VM and a specific firewall rule for that VM.
     --action=allow \
     --rules=tcp,udp \
     --source-ranges=0.0.0.0/0 \
-    --target-tags="honeypot-1"
+    --target-tags="honeypot-1,honeypot-2,honeypot-3"
 ```
 
 2. Create the VM for our honeypot, called honeypot-1:
@@ -224,21 +226,100 @@ For each honeypot you will create a VM and a specific firewall rule for that VM.
 This VM will require different ports open, though which ones depend on the specific honeypot being used. To keep things simple, for this VM (and any additional honeypot VMs you create), simply allow incoming traffic from all ports and protocols. Again, this will likely require a firewall rule.
 
 ## Milestone 4: Install the Honeypot Application
-You have the shell of your honeypot, but now you need to configure to attract attackers. MHN makes this straightforward. 
+You have the system for your honeypot, but now you need to configure it to attract attackers. MHN makes this straightforward. 
 1. Access the install script for your honeypot through the MHN server you have deployed.
-    1. Log on to the Web console for your MHN server. Copy the External IP of your system and paste into a browser tab. If the page fails to load make sure you are using the HTTP protocol and not HTTPS.
+    1. Log on to the mhn-admin system in the browser, so you can use the Web UI. Copy the External IP of your system and paste into a browser tab. If the page fails to load, make sure you are using the HTTP protocol and not HTTPS.
     ![Screenshot of accessing MHN Admin VM through browser](GCP-mhn-admin-HTTP.png)
     2. Log on with the email and password you configured before.
-    3. Click **Deploy** in the top nav, and choose a script. For your first VM choose **Ubuntu/Raspberry Pi - Dionaea**.
-    4. Copy the  Deploy Command appear shown.  This is a 1-line command to execute inside the honeypot VM to configure it properly.
+    3. Click **Deploy** in the top nav, and choose a script. For your first VM, choose **Ubuntu/Raspberry Pi - Dionaea**.
+    4. Copy the  Deploy Command appear shown.  This is a line comthe mand to execute inside the honeypot VM to configure it properly. It starts with *wget*.
     
-    For reference, the page also shows the full deployment script. Do not copy this piece. 
-2. Access the honeypot-1 VM to configure it. 
+2. Use the install script to configure the honeypot-1 VM. 
     1. From the Compute Engine page, click the **SSH** button next to your *honeypot-1* VM to open an SSH terminal in your browser.
-    2. Past the command you copied in the previous step and execute it.
-    This step should only take a few minutes to complete. 
-3. Return to the Web UI of mhn-admin server and confirm the installation. Click **Sensors > View Sesnors** sensors and you should see the new honeypot listed.
+    2. Paste the command you copied in the previous step and execute it.
+    This step should only take a few minutes to complete. Complete any prompts that the install script presents.
+3. Return to the Web UI of mhn-admin server and confirm the installation. Click **Sensors > View Sensors** sensors and you should see the new honeypot listed.
 
 ## Milestone 5: Attack!
 Now for the fun part: let's attack the honeypot to make sure it's all working. You can use nmap in Kali Linux and pass it the IP of the honeypot VM (not the IP of the MHN Admin VM):
 
+''''
+    nmap -A -T4 35.225.x.x
+    Starting Nmap 7.80 ( https://nmap.org ) at 2019-11-18 01:34 CST
+
+    map scan report for x.x.225.35.bc.googleusercontent.com (35.225.x.x)
+
+    Host is up (0.0059s latency).
+
+    Not shown: 992 filtered ports
+
+    PORT     STATE SERVICE  VERSION
+
+    21/tcp   open  ftp      Synology DiskStation NAS ftpd
+
+    ...
+
+    Nmap done: 1 IP address (1 host up) scanned in 239.62 seconds
+
+''''
+
+It should show multiple ports open...these are the services Dionaea is using to attract attackers. Switch back to the MHN Admin console in your browser, and from the top nav, choose Attacks. If everything goes well, you should see your IP address listed with several port scan records. This means the honeypot intercepted your attack.
+
+You may, however, see other attacks as well, from other IPs. In fact, it shouldn't take long at all for this to happen. Port scans should start coming in at an alarming rate, from all over the world, and even with only a single honeypot deployed, MHN will start collecting lots of data. Welcome to the hostile territory that is the Internet.
+
+## Milestone 6: More HoneyPot
+Repeat the steps for Milestone 4 and 5 with slight modifications.
+
+The commands below create a VM with the name "honeypot-2." To create more VMs, update that piece with something different, e.g. honeypot-3.
+
+```
+    You don't need to add a firewall rule for this VM because the *wideopen* firewall rule you created had tags for honeypot-2 and honeypot-3. 
+```    
+
+2. Create the VM for our honeypot, called honeypot-2:
+
+```
+    gcloud compute instances create "honeypot-2" \
+    --machine-type "n1-standard-1" \
+    --subnet "default" \
+    --maintenance-policy "MIGRATE" \
+    --tags "honeypot" \
+    --image "ubuntu-minimal-1804-bionic-v20191024" \
+    --image-project "ubuntu-os-cloud" \
+    --boot-disk-size "10" \
+    --boot-disk-type "pd-standard" \
+    --boot-disk-device-name "honeypot-2"
+```
+
+3. Log on to the Web UI of the mhn-admin VM to access the install script for another honeypot type. Click **Deploy** in the top nav, and choose a script. Copy only the command, which starts with *wget*
+    
+4. SSH to the _honeypot-2_ VM to run the install script. 
+ 
+5. Return to the Web UI of mhn-admin server and confirm the installation. Click **Sensors > View Sensors** sensors and you should see the new honeypot listed.
+
+## Milestone 7 Write it up
+
+After you are finished gathering data, you need to export the sensor database to a JSON file to turn in with your assignement. You can push it directly to your Git repository.
+
+*** You need to have set up your Git Repository for the HoneyPot Project before you do this step. ***
+
+1. SSH to the mhn-admin system.
+2. Run the following commands to export your data to JSON and add it to your git repo. Substitute your git username and git repository name anywhere you see <>.
+    #mongoexport --db mnemosyne --collection session > session.json
+    #git config --global user.email "<git username>@users.noreply.github.com"
+    #git clone https://github.com/ <git username>/<honeypot-repositoryname> 
+    #cp session.json ./<honeypot-repositoryname>/session.json 
+    #cd  <honeypot-repositoryname> 
+    #git add session.json 
+    #git commit session.json -m "Adding json file from MHN server." 
+    #git push
+    <you will be prompted for your username and password>
+3. Write up your findings on the README of the repository, as you have done for previous assignments. 
+        # Be sure to create a Private repository and add codepathreview as a collaborator.
+        #Include the following details:
+            #Which Honeypot(s) you deployed
+            #Any issues you encountered
+            #A summary of the data collected: number of attacks, number of malware samples, etc.
+            #Any unresolved questions raised by the data collected
+        #Link to the json export of the data you collected and posted to your Git.
+4. Submit the link to your Git Repository on the Assignments page.
